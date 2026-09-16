@@ -127,6 +127,42 @@ class PipelineTests(unittest.TestCase):
                     c.execute(select(func.count()).select_from(order_lines)).scalar(), 5
                 )
 
+    def test_blank_lines_append_and_resume_preserve_record_offsets(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d, "events.jsonl")
+            path.write_text("\n" + json.dumps(event()) + "\n \n", encoding="utf-8")
+            self.assertEqual(ingest_file(self.engine, path, page_size=2), 1)
+            with path.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(event(event_id="e2", line_id="l2")) + "\n")
+            self.assertEqual(ingest_file(self.engine, path, page_size=2), 2)
+            self.assertEqual(ingest_file(self.engine, path, page_size=2), 2)
+            with self.engine.connect() as c:
+                self.assertEqual(c.execute(select(func.count()).select_from(order_lines)).scalar(), 2)
+
+    def test_malformed_json_keeps_earlier_pages_but_not_current_page(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d, "events.jsonl")
+            prefix = "\n".join(json.dumps(event(event_id=f"e{i}", line_id=f"l{i}")) for i in range(3))
+            path.write_text(prefix + "\n{invalid\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Invalid JSON at line 4"):
+                ingest_file(self.engine, path, page_size=2)
+            self.assertEqual(checkpoint(self.engine, str(path.resolve())), 2)
+            with self.engine.connect() as c:
+                self.assertEqual(c.execute(select(func.count()).select_from(raw_events)).scalar(), 2)
+            # Repair only the uncommitted suffix, leaving the committed prefix intact.
+            path.write_text(prefix + "\n" + json.dumps(event(event_id="e3", line_id="l3")), encoding="utf-8")
+            self.assertEqual(ingest_file(self.engine, path, page_size=2), 4)
+
+    def test_truncated_file_does_not_reset_committed_checkpoint(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = Path(d, "events.jsonl")
+            path.write_text(json.dumps(event()), encoding="utf-8")
+            ingest_file(self.engine, path)
+            path.write_text("\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "truncated"):
+                ingest_file(self.engine, path)
+            self.assertEqual(checkpoint(self.engine, str(path.resolve())), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

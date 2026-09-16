@@ -1,13 +1,25 @@
 # Retail Data Platform
 
+[![Pipeline and data tests](https://github.com/SJ-14-SJ/retail-data-platform/actions/workflows/pipeline.yml/badge.svg?branch=main)](https://github.com/SJ-14-SJ/retail-data-platform/actions/workflows/pipeline.yml)
+
 A reproducible retail pipeline that turns versioned order events into a queryable warehouse and a daily-demand dataset. Built to demonstrate data ingestion, transactional recovery, SQL modelling and data-quality testing.
 
-[Companion forecasting application](https://github.com/SJ-14-SJ/demand-forecasting-app)
+[Case study](docs/CASE-STUDY.md) · [Measured benchmark](docs/BENCHMARK.md) · [Design decisions](docs/DESIGN.md) · [Companion forecasting application](https://github.com/SJ-14-SJ/demand-forecasting-app)
+
+## Review in two minutes
+
+| Question | Evidence |
+| --- | --- |
+| What happens when ingestion fails? | Page data and checkpoint commit together; [regression tests](tests/test_pipeline.py) demonstrate rollback, restart, replay and late corrections. |
+| How does the reader handle a larger file? | [Measured at 100,000 synthetic records](docs/BENCHMARK.md): peak traced Python reader allocations fell from 159.51 MiB for full-file parsing to 0.289 MiB for streaming, at 100 records/page. This is reader memory, not total process memory. |
+| Can it run against a warehouse? | [GitHub Actions](https://github.com/SJ-14-SJ/retail-data-platform/actions/workflows/pipeline.yml) runs PostgreSQL ingestion tests and dbt models with data checks. |
+| Where does the analytical dataset go? | 6,072 selected UCI rows produce 1,119 daily observations consumed by [DemandLab](https://github.com/SJ-14-SJ/demand-forecasting-app). |
 
 ## What you can inspect
 
 - **Transactional pages:** accepted events, rejected-event records, dimension updates and the source checkpoint commit together.
 - **Replay safety:** an event ID is processed once. Conflicting reuse fails the page instead of silently changing history.
+- **Streaming file reader:** keeps pages in memory and counts nonblank records for restart; malformed JSON leaves the current page uncommitted.
 - **Late updates:** a higher line revision replaces an older version, including cancellations; stale revisions cannot overwrite newer data.
 - **Explicit validation:** unsupported schema versions and invalid fields are recorded as rejected events.
 - **Two database paths:** SQLite for a quick local run; PostgreSQL with dbt for warehouse modelling.
@@ -33,6 +45,8 @@ python -m unittest discover -s tests -v
 The generated `data/events.jsonl` is **synthetic**, reproducible with seed 42: 1,260 base sale lines over 420 days for three products, plus a late correction, cancellation, replay and invalid-schema event. There are no real customer identities in this sample. Outputs are `outputs/daily_demand.csv` and `outputs/event_quality.csv`.
 
 Run ingestion again: the offset is already committed and no duplicate sales appear.
+
+For a reproducible memory and ingestion experiment, run `python -m retail.benchmark`. See the [measurement protocol and raw results](docs/BENCHMARK.md).
 
 ## Demonstrate interrupted-run recovery
 
@@ -100,11 +114,11 @@ flowchart TD
 ## Important boundaries
 
 - One writer per source is supported. PostgreSQL locks existing checkpoint rows, but first-writer races and cross-source line contention need stronger coordination before concurrent production use.
-- File ingestion expects an append-only source. Replacing or reordering previously processed file contents is unsupported. The current small-file reader loads the source into memory.
+- File ingestion expects an append-only source. Replacing or reordering previously processed contents is unsupported. Streaming bounds retained records by page size, but a resume still scans the committed prefix and individual record size is not capped.
 - UCI cancellation rows are excluded from gross sales; this is **not net revenue** and not a full returns reconciliation system.
 - Calendar gaps are zero-filled under an explicit complete-capture assumption. An upstream outage must not be mistaken for zero demand.
 - Orders and revenue are implemented; live inventory and payment integrations are future work. No operational savings or production scale are claimed.
 
-See [design decisions](docs/DESIGN.md) and [development exercises](docs/NEXT-STEPS.md). Implemented with Codex assistance; use the tests and exercises to explain and extend the work.
+See [design decisions](docs/DESIGN.md), [development exercises](docs/NEXT-STEPS.md) and [contributing](CONTRIBUTING.md). Implemented with Codex assistance; use the tests and exercises to explain and extend the work.
 
 Code is MIT-licensed. External data retains its separate CC BY 4.0 attribution.

@@ -150,24 +150,51 @@ def process_page(engine, events, source, offset, fail_before_checkpoint=False):
     return counts
 
 
-def ingest_file(engine, path, page_size=100, source=None, fail_page=None):
+def iter_file_pages(path, start=0, page_size=100):
+    """Read at most a page of nonblank JSONL records into memory.
+
+    Checkpoints count records, not physical lines or bytes. Resuming scans the
+    committed prefix without parsing it; callers must keep that prefix immutable.
+    A syntax error prevents its entire page from being yielded.
+    """
     if page_size < 1:
         raise ValueError("page_size must be positive")
-    source = source or str(Path(path).resolve())
-    events = [
-        json.loads(line) for line in Path(path).read_text().splitlines() if line.strip()
-    ]
-    offset = checkpoint(engine, source)
-    if offset > len(events):
+    if start < 0:
+        raise ValueError("start must be nonnegative")
+    seen = 0
+    page = []
+    with Path(path).open(encoding="utf-8") as handle:
+        for line_number, line in enumerate(handle, 1):
+            if not line.strip():
+                continue
+            if seen < start:
+                seen += 1
+                continue
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise ValueError(
+                    f"Invalid JSON at line {line_number}; current page was not committed"
+                ) from exc
+            page.append(event)
+            seen += 1
+            if len(page) == page_size:
+                yield page
+                page = []
+    if seen < start:
         raise ValueError("Source was truncated; use a new source identity")
-    pages = 0
-    while offset < len(events):
-        page = events[offset : offset + page_size]
+    if page:
+        yield page
+
+
+def ingest_file(engine, path, page_size=100, source=None, fail_page=None):
+    source = source or str(Path(path).resolve())
+    offset = checkpoint(engine, source)
+    for pages, page in enumerate(iter_file_pages(path, offset, page_size)):
         process_page(
             engine, page, source, offset, fail_before_checkpoint=(pages == fail_page)
         )
         offset += len(page)
-        pages += 1
     return offset
 
 

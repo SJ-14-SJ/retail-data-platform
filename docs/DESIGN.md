@@ -16,6 +16,12 @@ Unsupported schemas and invalid fields are quarantined with their raw payload an
 
 Python ingests and exports. dbt expresses warehouse transformations and validation. PostgreSQL supports a dense calendar and window-function cohort analysis. SQLite remains a portable local demonstration path, with the same ingestion semantics.
 
+## Stream records while preserving logical offsets
+
+The file reader holds pages of nonblank JSON records rather than materializing the entire source. Blank lines do not advance the checkpoint. Resuming skips the committed record prefix without decoding it, so startup is still linear in file length and the prefix must remain immutable. A shorter file is rejected when it cannot satisfy the committed offset.
+
+Malformed JSON cannot form a valid page: the reader stops before yielding that page. Earlier pages remain committed, and the uncommitted suffix can be repaired before restarting. Parseable events with invalid fields still go through the quarantine path. Tests cover both interruption types, blank lines and append/resume behaviour. The [benchmark](BENCHMARK.md) separates reader allocations from full database throughput.
+
 ## Monetary amounts use integer cents
 
 Line prices are stored as integer cents to avoid binary floating-point monetary accumulation. The UCI importer rounds decimal prices to cents. Warehouse SQL casts multiplication to bigint. Currency conversion, tax and multi-currency accounting are outside scope.
