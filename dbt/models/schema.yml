@@ -1,0 +1,42 @@
+version: 2
+sources:
+  - name: retail
+    schema: public
+    tables:
+      - name: order_lines
+        columns:
+          - name: line_id
+            data_tests: [not_null, unique]
+          - name: sku
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('retail', 'products')
+                    field: sku
+          - name: customer_id
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('retail', 'customers')
+                    field: customer_id
+      - name: products
+      - name: customers
+models:
+  - name: stg_sales
+    description: Gross sale lines. Cancellations excluded; not net revenue after returns.
+    columns:
+      - name: line_id
+        data_tests: [unique, not_null]
+  - name: daily_demand
+    description: Complete daily calendar per SKU for forecasting handoff.
+    columns:
+      - name: sku
+        data_tests: [not_null]
+      - name: order_date
+        data_tests: [not_null]
+      - name: units
+        data_tests: [not_null]
+  - name: customer_cohorts
+    description: Monthly repeat-purchase retention for identifiable customers.
