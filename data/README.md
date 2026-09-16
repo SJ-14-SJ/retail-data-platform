@@ -1,0 +1,1 @@
+Run `python -m retail.generate_sample` from the repository root to create the deterministic synthetic event feed. The generated JSONL is ignored to keep the repository small. It includes late revisions, a cancellation, duplicate delivery and an unsupported schema example. Public UCI data is imported separately; see the main README.

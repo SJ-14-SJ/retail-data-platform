@@ -1,0 +1,12 @@
+retail_analytics:
+  target: local
+  outputs:
+    local:
+      type: postgres
+      host: "{{ env_var('PGHOST', 'localhost') }}"
+      port: 5432
+      user: "{{ env_var('PGUSER', 'retail') }}"
+      password: "{{ env_var('PGPASSWORD', 'retail') }}"
+      dbname: "{{ env_var('PGDATABASE', 'retail') }}"
+      schema: analytics
+      threads: 2
