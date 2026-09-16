@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "measured_at_utc": "2026-09-16T10:40:23.784751+00:00",
+  "python": "3.12.14",
+  "platform": "Linux",
+  "architecture": "x86_64",
+  "page_size": 100,
+  "repeats": 3,
+  "pipeline_sha256": "5418e9fb39f97453a68262b890cfd5dd1a54ee8a7ec0c77c7f210a90b38fb166",
+  "measurement_note": "Reader-only peak traced Python allocations; not RSS. Local synthetic workload, not a production capacity claim.",
+  "readers": [
+    {
+      "records": 1000,
+      "input_bytes": 222790,
+      "reader": "eager_reference",
+      "median_seconds": 0.017572487000052206,
+      "median_peak_python_bytes": 1665135,
+      "samples": [
+        {
+          "records": 1000,
+          "seconds": 0.016672518000063974,
+          "peak_python_bytes": 1665135
+        },
+        {
+          "records": 1000,
+          "seconds": 0.017572487000052206,
+          "peak_python_bytes": 1665135
+        },
+        {
+          "records": 1000,
+          "seconds": 0.018055045999972208,
+          "peak_python_bytes": 1665135
+        }
+      ]
+    },
+    {
+      "records": 1000,
+      "input_bytes": 222790,
+      "reader": "streaming",
+      "median_seconds": 0.01690325600009146,
+      "median_peak_python_bytes": 302174,
+      "samples": [
+        {
+          "records": 1000,
+          "seconds": 0.01797996300001614,
+          "peak_python_bytes": 302182
+        },
+        {
+          "records": 1000,
+          "seconds": 0.016879311000025154,
+          "peak_python_bytes": 302174
+        },
+        {
+          "records": 1000,
+          "seconds": 0.01690325600009146,
+          "peak_python_bytes": 302142
+        }
+      ]
+    },
+    {
+      "records": 10000,
+      "input_bytes": 2257920,
+      "reader": "eager_reference",
+      "median_seconds": 0.19545316599999296,
+      "median_peak_python_bytes": 16678621,
+      "samples": [
+        {
+          "records": 10000,
+          "seconds": 0.19695819900005063,
+          "peak_python_bytes": 16678621
+        },
+        {
+          "records": 10000,
+          "seconds": 0.19545316599999296,
+          "peak_python_bytes": 16678621
+        },
+        {
+          "records": 10000,
+          "seconds": 0.1792112079999697,
+          "peak_python_bytes": 16678621
+        }
+      ]
+    },
+    {
+      "records": 10000,
+      "input_bytes": 2257920,
+      "reader": "streaming",
+      "median_seconds": 0.1701940419999346,
+      "median_peak_python_bytes": 302810,
+      "samples": [
+        {
+          "records": 10000,
+          "seconds": 0.1701940419999346,
+          "peak_python_bytes": 302818
+        },
+        {
+          "records": 10000,
+          "seconds": 0.17226296600006208,
+          "peak_python_bytes": 302810
+        },
+        {
+          "records": 10000,
+          "seconds": 0.16333493299998736,
+          "peak_python_bytes": 302786
+        }
+      ]
+    },
+    {
+      "records": 100000,
+      "input_bytes": 22879170,
+      "reader": "eager_reference",
+      "median_seconds": 2.1873890619999656,
+      "median_peak_python_bytes": 167258597,
+      "samples": [
+        {
+          "records": 100000,
+          "seconds": 3.12220112600005,
+          "peak_python_bytes": 167258597
+        },
+        {
+          "records": 100000,
+          "seconds": 2.1873890619999656,
+          "peak_python_bytes": 167258597
+        },
+        {
+          "records": 100000,
+          "seconds": 2.0974487580000414,
+          "peak_python_bytes": 167258597
+        }
+      ]
+    },
+    {
+      "records": 100000,
+      "input_bytes": 22879170,
+      "reader": "streaming",
+      "median_seconds": 1.6748332280000113,
+      "median_peak_python_bytes": 303397,
+      "samples": [
+        {
+          "records": 100000,
+          "seconds": 1.6603510639999968,
+          "peak_python_bytes": 303405
+        },
+        {
+          "records": 100000,
+          "seconds": 1.7303977110000233,
+          "peak_python_bytes": 303397
+        },
+        {
+          "records": 100000,
+          "seconds": 1.6748332280000113,
+          "peak_python_bytes": 303373
+        }
+      ]
+    }
+  ],
+  "sqlite": {
+    "records": 10000,
+    "initial_ingest_seconds": 4.28195060500002,
+    "records_per_second": 2335.384249487379,
+    "resume_no_new_records_seconds": 0.002311781000003066,
+    "order_lines": 10000,
+    "audit_rows": 10000,
+    "checkpoint": 10000,
+    "verification": "Exact row counts; second run adds no records"
+  }
+}

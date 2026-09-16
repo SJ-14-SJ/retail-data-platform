@@ -44,9 +44,12 @@ jobs:
           python -m retail.cli export
       - name: Build and validate analytics models
         run: dbt build --project-dir dbt --profiles-dir dbt
+      - name: Benchmark smoke run and row-count verification
+        run: python -m retail.benchmark --sizes 1000 2000 --repeats 1 --pipeline-records 200
       - uses: actions/upload-artifact@v4
         with:
           name: analytics-validation
           path: |
             outputs/*.csv
+            outputs/benchmark.json
             dbt/target/run_results.json
